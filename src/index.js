@@ -52,13 +52,13 @@ app.post('/users', (req, res) => {
 app.use(checksExistsUserAccount);
 
 app.get('/todos', (req, res) => {
-  const { user } = req;
-  return res.json(user.todos);
+  const { user: { todos }} = req;
+  return res.json(todos);
 });
 
 app.post('/todos', (req, res) => {
   const { title, deadline } = req.body;
-  const { user } = req;
+  const { user: { todos }} = req;
   
   const newTodo = {
     id: uuidv4(),
@@ -68,39 +68,32 @@ app.post('/todos', (req, res) => {
     created_at: new Date(),
   }
   
-  user.todos.push(newTodo);
+  todos.push(newTodo);
   return res.status(201).json(newTodo);
 });
 
 app.put('/todos/:id', checksExistsUserTodo, (req, res) => {
   const { title, deadline } = req.body;
-  const { user: { todos }, todo } = req;
+  const { todo } = req;
 
-  const patchedTodo = {...todo, title, deadline: new Date(deadline)}
+  todo.title = title;
+  todo.deadline = new Date(deadline);
 
-  todos.forEach((todoItem, index) => 
-    todoItem === todo && (todos[index] = patchedTodo)
-  );
-
-  return res.json(patchedTodo);
+  return res.json(todo);
 });
 
 app.patch('/todos/:id/done', checksExistsUserTodo, (req, res) => {
-  const { user: { todos }, todo } = req;
-  const patchedTodo = { ...todo, done: true }
-
-  todos.forEach((todoItem, index) => todoItem === todo 
-    && (todos[index] = patchedTodo)
-  );
-
-  return res.json(patchedTodo);
+  const { todo } = req;
+  todo.done = true;
+  
+  return res.json(todo);
 });
 
 app.delete('/todos/:id', checksExistsUserTodo, (req, res) => {
-  const { user, todo } = req;
+  const { user: { todos }, todo } = req;
+  const todoIndex = todos.indexOf(todo);
 
-  user.todos = user.todos.filter(todoItem => todoItem !== todo);
-
+  todos.splice(todoIndex, 1);
   return res.status(204).send()
 });
 
